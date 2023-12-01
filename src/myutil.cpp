@@ -253,3 +253,12 @@ bool ParserMeasureSite(const int argc, char *argv[],
 
   return start_argument_has;
 }
+
+std::vector<double> linspace(double start, double stop, int num_points) {
+  double step = (stop - start) / num_points;
+  std::vector<double> points;
+  for (int i = 0; i < num_points; i++) {
+    points.push_back(start + i * step);
+  }
+  return points;
+}

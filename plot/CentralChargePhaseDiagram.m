@@ -1,14 +1,14 @@
 L = 128;
-P = 4;
+P = 1;
 num_theta = 30;
 theta_list= [0:(pi/2)/num_theta:pi/2]; theta_list(end)=[];
 J_list = [-2:0.1:1.9];
 central_charge_list = zeros(numel(theta_list), numel(J_list));
 Level = 0;
-Db = 400;
+possible_Db = [2000,1000,600,200];
 
 central_charge_filename = ['central_charge/centralchargeL', num2str(L), 'Level', num2str(Level), 'P', num2str(P),'.mat'];
-if(exist(central_charge_filename,'file'))
+if(0 && exist(central_charge_filename,'file'))
     load(central_charge_filename);
 else
     for i = 1:numel(theta_list)
@@ -22,7 +22,13 @@ else
         end
         for j = 1:numel(J_list)
             J = J_list(j);
-            file_name = ['../data/eeLRIL',num2str(L), 'omega0', omega0_str, 'omega1', omega1_str, 'J', num2str(round(J,1), '%.1f'), 'Level', num2str(Level), 'P', num2str(P), 'D', num2str(Db)];
+            for k = 1:numel(possible_Db)
+                Db = possible_Db(k);
+                file_name = ['../data/eeLRIL',num2str(L), 'omega0', omega0_str, 'omega1', omega1_str, 'J', num2str(round(J,1), '%.1f'), 'Level', num2str(Level), 'P', num2str(P), 'D', num2str(Db)];
+                if( exist(file_name,'file') )
+                    break;
+                end
+            end
             file_id = fopen(file_name,'r');
             ee2 = fread(file_id,L-1, 'double');
             l_list = 1:L-1;
@@ -38,16 +44,9 @@ else
             b = mdl.Coefficients.Estimate;
             sites = l_list(start_site):0.1:l_list(end-start_site+1);
 
-            % plot(log((L+1)/pi * sin(pi*(2*l_list+1)/2/(L+1))),ee2,'-o');hold on;
-            % fit_x=log((L+1)/pi * sin(pi*(2*l_list(start_site:2:end-start_site)+1)/2/(L+1)));
-            % fit_y=ee2(start_site:2:end-start_site);
-            % p = fit((fit_x'),(fit_y'),'poly1');
-            % plot(fit_x, p.p1*fit_x + p.p2,'-.');hold on;
-            if c < 0
-                c = 0;
-            end
-            if c > 1
-                c= 1;
+
+            if c < -1 ||  c > 2
+                fprintf('theta = %.4f, J = %.1f, c = %.2f, D = %i \n',theta, J, c, Db);
             end
             central_charge_list(i,j)=c;
         end
@@ -64,10 +63,10 @@ set(gca,'YDir','normal');
 set(gca,'fontsize',24);
 set(gca,'linewidth',1.5);
 %set(get(gca,'Children'),'linewidth',2); % Set line width 1.5 pounds
-xlabel('$J$','Interpreter','latex');
-ylabel('$\theta$','Interpreter','latex');
+xlabel('$J$','Interpreter','latex','FontName','Times New Roman');
+ylabel('$\theta$','Interpreter','latex','FontName','Times New Roman');
 set(get(gca,'XLabel'),'FontSize',24);
 set(get(gca,'YLabel'),'FontSize',24);
 
 set(gca,'linewidth',1.5);
-set(gcf,'position',[1000,1000,450,400]);
+set(gcf,'position',[1000,1000,750,600]);
