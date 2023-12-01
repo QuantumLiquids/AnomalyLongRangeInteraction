@@ -8,7 +8,8 @@ using gqten::QNCard;
 using gqten::U1QNVal;
 using gqten::GQTenIndexDirType;
 
-using TenElemT = gqten::GQTEN_Complex;
+//using TenElemT = gqten::GQTEN_Complex;
+using TenElemT = gqten::GQTEN_Double;
 using U1QN = gqten::special_qn::U1QN;
 using Tensor = gqten::GQTensor<TenElemT, U1QN>;
 
