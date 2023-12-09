@@ -202,7 +202,7 @@ void DMRGForOneTheta(const CaseParams &params,
   } else {
     sweeps = params.Sweeps;
   }
-  gqmps2::TwoSiteVMPSSweepParams sweep_params(
+  gqmps2::FiniteVMPSSweepParams sweep_params(
       sweeps,
       params.Dmin, params.Dmax,
       params.CutOff,

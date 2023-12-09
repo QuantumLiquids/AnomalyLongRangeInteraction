@@ -17,7 +17,6 @@
 #include "dmrg_my_measure.h"
 
 
-
 using namespace gqmps2;
 using namespace gqten;
 using namespace std;
@@ -53,11 +52,19 @@ int main(int argc, char *argv[]) {
   using FiniteMPST = gqmps2::FiniteMPS<TenElemT, U1QN>;
   FiniteMPST mps(sites);
 
-  Timer one_site_timer("measure  one site operators");
-  MeasureOneSiteOp(mps, kMpsPath, sz, "sz");
-  MeasureOneSiteOp(mps, kMpsPath, sp, "sp");
-  MeasureOneSiteOp(mps, kMpsPath, sm, "sm");
-  cout << "measured one point function.<====" << endl;
+  std::vector<std::vector<size_t>> sites_set;
+  for (size_t i = L / 4 + 1; i < std::min(3 * L / 4 + 2, L); i++) {
+    sites_set.push_back({L / 4, i});
+  }
+  mps.Load();
+  // Measure the S^2 operator
+
+  Timer one_site_timer("measure  two site operators");
+  MeasureTwoSiteOp(mps, {sz, sz}, id, sites_set, "zz");
+  MeasureTwoSiteOp(mps, {sp, sm}, id, sites_set, "pm");
+  MeasureTwoSiteOp(mps, {sm, sm}, id, sites_set, "mm");
+  MeasureTwoSiteOp(mps, {sm, sp}, id, sites_set, "mp");
+  MeasureTwoSiteOp(mps, {sp, sp}, id, sites_set, "pp");
   one_site_timer.PrintElapsed();
 
   endTime = clock();

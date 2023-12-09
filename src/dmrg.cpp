@@ -54,72 +54,72 @@ int main(int argc, char *argv[]) {
   using QNT = U1QN;
   const SiteVec<TenElemT, QNT> sites = SiteVec<TenElemT, QNT>(L, pb_out);
 
-  gqmps2::MPO<Tensor> mpo(L);
-  const std::string kMpoPath = "mpo";
-  const std::string kMpoTenBaseName = "mpo_ten";
-  if (IsPathExist(kMpoPath)) {
-    for (size_t i = 0; i < mpo.size(); i++) {
-      std::string filename = kMpoPath + "/" +
-                             kMpoTenBaseName + std::to_string(i) + "." + kGQTenFileSuffix;
-      mpo.LoadTen(i, filename);
+//  gqmps2::MPO<Tensor> mpo(L);
+//  const std::string kMpoPath = "mpo";
+//  const std::string kMpoTenBaseName = "mpo_ten";
+//  if (IsPathExist(kMpoPath)) {
+//    for (size_t i = 0; i < mpo.size(); i++) {
+//      std::string filename = kMpoPath + "/" +
+//                             kMpoTenBaseName + std::to_string(i) + "." + kGQTenFileSuffix;
+//      mpo.LoadTen(i, filename);
+//    }
+//    cout << "MPO loaded." << endl;
+//  } else {
+//    cout << "No mpo directory. start to generate mpo" << std::endl;
+  gqmps2::MPOGenerator<TenElemT, U1QN> mpo_gen(sites, qn0);
+  if (model_params.is_anomaly) {
+    for (size_t i = 0; i < L - 1; i++) {
+      mpo_gen.AddTerm(0.5 * model_params.omega_0, sigma_z, i, sigma_x, i + 1);
     }
-    cout << "MPO loaded." << endl;
+    for (size_t i = 0; i < L - 1; i++) {
+      mpo_gen.AddTerm(0.5 * model_params.omega_0, sigma_x, i, sigma_z, i + 1);
+    }
+    for (size_t i = 0; i < L; i++) {
+      mpo_gen.AddTerm(0.5 * model_params.omega_1, sigma_x, i);
+    }
+    for (size_t i = 0; i < L - 2; i++) {
+      mpo_gen.AddTerm(-0.5 * model_params.omega_1, {sigma_z, sigma_x, sigma_z}, {i, i + 1, i + 2});
+    }
   } else {
-    cout << "No mpo directory. start to generate mpo" << std::endl;
-    gqmps2::MPOGenerator<TenElemT, U1QN> mpo_gen(sites, qn0);
-    if (model_params.is_anomaly) {
-      for (size_t i = 0; i < L - 1; i++) {
-        mpo_gen.AddTerm(0.5 * model_params.omega_0, sigma_z, i, sigma_x, i + 1);
-      }
-      for (size_t i = 0; i < L - 1; i++) {
-        mpo_gen.AddTerm(0.5 * model_params.omega_0, sigma_x, i, sigma_z, i + 1);
-      }
-      for (size_t i = 0; i < L; i++) {
-        mpo_gen.AddTerm(0.5 * model_params.omega_1, sigma_x, i);
-      }
-      for (size_t i = 0; i < L - 2; i++) {
-        mpo_gen.AddTerm(-0.5 * model_params.omega_1, {sigma_z, sigma_x, sigma_z}, {i, i + 1, i + 2});
-      }
-    } else {
-      for (size_t i = 0; i < L - 2; i++) {
-        mpo_gen.AddTerm(0.5 * (model_params.omega_1 + model_params.omega_0), sigma_x, i + 1);
-        mpo_gen.AddTerm(-0.5 * (model_params.omega_0 - model_params.omega_1), {sigma_z, sigma_x, sigma_z},
-                        {i, i + 1, i + 2});
-      }
+    for (size_t i = 0; i < L - 2; i++) {
+      mpo_gen.AddTerm(0.5 * (model_params.omega_1 + model_params.omega_0), sigma_x, i + 1);
+      mpo_gen.AddTerm(-0.5 * (model_params.omega_0 - model_params.omega_1), {sigma_z, sigma_x, sigma_z},
+                      {i, i + 1, i + 2});
     }
-
-    if (model_params.decay_level == 0) { //const
-      for (size_t i = 0; i < L; i++) {
-        for (size_t j = i + 2; j < std::min(i + params.InteractionRange + 2, L); j++) {
-          mpo_gen.AddTerm(model_params.J / 2, sigma_z, i, sigma_z, j);
-        }
-      }
-    } else if (model_params.decay_level == -1) {
-      for (size_t i = 0; i < L; i++) {
-        for (size_t j = i + 2; j < L; j++) {
-          mpo_gen.AddTerm(model_params.J / 2 / (j - i), sigma_z, i, sigma_z, j);
-        }
-      }
-    } else if (model_params.decay_level == -2) {
-      for (size_t i = 0; i < L; i++) {
-        for (size_t j = i + 2; j < L; j++) {
-          mpo_gen.AddTerm(model_params.J / 2 / (j - i) / (j - i), sigma_z, i, sigma_z, j);
-        }
-      }
-    } else if (model_params.decay_level == 1) {
-      for (size_t i = 0; i < L; i++) {
-        for (size_t j = i + 2; j < L; j++) {
-          mpo_gen.AddTerm(model_params.J * std::exp(-(double) (j - i) / params.J_exp_decay_length),
-                          sigma_z, i, sigma_z, j);
-        }
-      }
-    } else {
-      std::cout << "Do not support." << std::endl;
-      exit(1);
-    }
-
-    mpo = mpo_gen.Gen();
   }
+
+  if (model_params.decay_level == 0) { //const
+    for (size_t i = 0; i < L; i++) {
+      for (size_t j = i + 2; j < std::min(i + params.InteractionRange + 2, L); j++) {
+        mpo_gen.AddTerm(model_params.J / 2, sigma_z, i, sigma_z, j);
+      }
+    }
+  } else if (model_params.decay_level == -1) {
+    for (size_t i = 0; i < L; i++) {
+      for (size_t j = i + 2; j < L; j++) {
+        mpo_gen.AddTerm(model_params.J / 2 / (j - i), sigma_z, i, sigma_z, j);
+      }
+    }
+  } else if (model_params.decay_level == -2) {
+    for (size_t i = 0; i < L; i++) {
+      for (size_t j = i + 2; j < L; j++) {
+        mpo_gen.AddTerm(model_params.J / 2 / (j - i) / (j - i), sigma_z, i, sigma_z, j);
+      }
+    }
+  } else if (model_params.decay_level == 1) {
+    for (size_t i = 0; i < L; i++) {
+      for (size_t j = i + 2; j < L; j++) {
+        mpo_gen.AddTerm(model_params.J * std::exp(-(double) (j - i) / params.J_exp_decay_length),
+                        sigma_z, i, sigma_z, j);
+      }
+    }
+  } else {
+    std::cout << "Do not support." << std::endl;
+    exit(1);
+  }
+
+  auto mpo = mpo_gen.GenMatReprMPO();
+//  }
 
   using FiniteMPST = gqmps2::FiniteMPS<TenElemT, QNT>;
   FiniteMPST mps(sites);
@@ -166,10 +166,9 @@ int main(int argc, char *argv[]) {
     gqmps2::FiniteVMPSSweepParams sweep_params(
         params.Sweeps,
         Dmin_set[i], Dmax_set[i], params.CutOff,
-        gqmps2::LanczosParams(params.LanczErr, MaxLanczIterSet[i]),
-        params.noise
+        gqmps2::LanczosParams(params.LanczErr, MaxLanczIterSet[i])
     );
-    e0 = gqmps2::TwoSiteFiniteVMPS(mps, mpo, sweep_params);
+    e0 = gqmps2::FiniteDMRG(mps, mpo, sweep_params);
     mps_path = sweep_params.mps_path;
   }
 
