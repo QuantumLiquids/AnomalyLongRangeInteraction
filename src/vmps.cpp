@@ -68,16 +68,10 @@ int main(int argc, char *argv[]) {
     cout << "No mpo directory. start to generate mpo" << std::endl;
     gqmps2::MPOGenerator<TenElemT, U1QN> mpo_gen(sites, qn0);
     if (model_params.is_anomaly) {
-      for (size_t i = 0; i < L - 1; i++) {
-        mpo_gen.AddTerm(0.5 * model_params.omega_0, sigma_z, i, sigma_x, i + 1);
-      }
-      for (size_t i = 0; i < L - 1; i++) {
-        mpo_gen.AddTerm(0.5 * model_params.omega_0, sigma_x, i, sigma_z, i + 1);
-      }
-      for (size_t i = 0; i < L; i++) {
-        mpo_gen.AddTerm(0.5 * model_params.omega_1, sigma_x, i);
-      }
       for (size_t i = 0; i < L - 2; i++) {
+        mpo_gen.AddTerm(0.5 * model_params.omega_0, sigma_z, i, sigma_x, i + 1);
+        mpo_gen.AddTerm(0.5 * model_params.omega_0, sigma_x, i + 1, sigma_z, i + 2);
+        mpo_gen.AddTerm(0.5 * model_params.omega_1, sigma_x, i + 1);
         mpo_gen.AddTerm(-0.5 * model_params.omega_1, {sigma_z, sigma_x, sigma_z}, {i, i + 1, i + 2});
       }
     } else {
