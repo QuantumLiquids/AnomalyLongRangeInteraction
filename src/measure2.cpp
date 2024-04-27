@@ -6,8 +6,8 @@
 /**
  * 2 processes parallel
  */
-#include "gqmps2/gqmps2.h"
-#include "gqten/gqten.h"
+#include "qlmps/qlmps.h"
+#include "qlten/qlten.h"
 #include <ctime>
 #include "gqdouble.h"
 //#include "myutil.h"
@@ -17,8 +17,8 @@
 #include "dmrg_my_measure.h"
 
 
-using namespace gqmps2;
-using namespace gqten;
+using namespace qlmps;
+using namespace qlten;
 using namespace std;
 
 int main(int argc, char *argv[]) {
@@ -34,8 +34,8 @@ int main(int argc, char *argv[]) {
   clock_t startTime, endTime;
   startTime = clock();
 
-  gqten::hp_numeric::SetTensorTransposeNumThreads(params.Threads);
-  gqten::hp_numeric::SetTensorManipulationThreads(params.Threads);
+  qlten::hp_numeric::SetTensorTransposeNumThreads(params.Threads);
+  qlten::hp_numeric::SetTensorManipulationThreads(params.Threads);
 
 
   Tensor sz = Tensor({pb_in, pb_out});
@@ -49,7 +49,7 @@ int main(int argc, char *argv[]) {
   id({0, 0}) = 1.0;
   id({1, 1}) = 1.0;
   const SiteVec<TenElemT, U1QN> sites = SiteVec<TenElemT, U1QN>(L, pb_out);
-  using FiniteMPST = gqmps2::FiniteMPS<TenElemT, U1QN>;
+  using FiniteMPST = qlmps::FiniteMPS<TenElemT, U1QN>;
   FiniteMPST mps(sites);
 
   std::vector<std::vector<size_t>> sites_set;

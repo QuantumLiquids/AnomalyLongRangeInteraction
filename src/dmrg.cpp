@@ -1,5 +1,5 @@
-#include "gqmps2/gqmps2.h"
-#include "gqten/gqten.h"
+#include "qlmps/qlmps.h"
+#include "qlten/qlten.h"
 #include <time.h>
 #include <stdlib.h>
 #include "gqdouble.h"
@@ -8,8 +8,8 @@
 #include "myutil.h"
 #include <random>
 
-using namespace gqmps2;
-using namespace gqten;
+using namespace qlmps;
+using namespace qlten;
 using namespace std;
 
 int main(int argc, char *argv[]) {
@@ -54,19 +54,19 @@ int main(int argc, char *argv[]) {
   using QNT = U1QN;
   const SiteVec<TenElemT, QNT> sites = SiteVec<TenElemT, QNT>(L, pb_out);
 
-//  gqmps2::MPO<Tensor> mpo(L);
+//  qlmps::MPO<Tensor> mpo(L);
 //  const std::string kMpoPath = "mpo";
 //  const std::string kMpoTenBaseName = "mpo_ten";
 //  if (IsPathExist(kMpoPath)) {
 //    for (size_t i = 0; i < mpo.size(); i++) {
 //      std::string filename = kMpoPath + "/" +
-//                             kMpoTenBaseName + std::to_string(i) + "." + kGQTenFileSuffix;
+//                             kMpoTenBaseName + std::to_string(i) + "." + kQLTenFileSuffix;
 //      mpo.LoadTen(i, filename);
 //    }
 //    cout << "MPO loaded." << endl;
 //  } else {
 //    cout << "No mpo directory. start to generate mpo" << std::endl;
-  gqmps2::MPOGenerator<TenElemT, U1QN> mpo_gen(sites, qn0);
+  qlmps::MPOGenerator<TenElemT, U1QN> mpo_gen(sites, qn0);
   if (model_params.is_anomaly) {
     for (size_t i = 0; i < L - 2; i++) {
       mpo_gen.AddTerm(0.5 * model_params.omega_0, sigma_z, i, sigma_x, i + 1);
@@ -112,10 +112,10 @@ int main(int argc, char *argv[]) {
     exit(1);
   }
 
-  auto mpo = mpo_gen.GenMatReprMPO();
+  auto mpo = mpo_gen.GenMatReprMPO(true);
 //  }
 
-  using FiniteMPST = gqmps2::FiniteMPS<TenElemT, QNT>;
+  using FiniteMPST = qlmps::FiniteMPS<TenElemT, QNT>;
   FiniteMPST mps(sites);
 
   if (params.Threads == 0) {
@@ -123,8 +123,7 @@ int main(int argc, char *argv[]) {
     params.Threads = max_threads;
   }
 
-  gqten::hp_numeric::SetTensorTransposeNumThreads(params.Threads);
-  gqten::hp_numeric::SetTensorManipulationThreads(params.Threads);
+  qlten::hp_numeric::SetTensorManipulationThreads(params.Threads);
 
 
   std::vector<long unsigned int> stat_labs(L);
@@ -142,13 +141,13 @@ int main(int argc, char *argv[]) {
       cout << "The number of mps files is consistent with mps size." << endl;
       cout << "Directly use mps from files." << endl;
     } else {
-      gqmps2::DirectStateInitMps(mps, stat_labs);
+      qlmps::DirectStateInitMps(mps, stat_labs);
       cout << "Initial mps as direct product state." << endl;
       mps.Dump(kMpsPath, true);
     }
   } else {
     cout << "No mps directory." << endl;
-    gqmps2::DirectStateInitMps(mps, stat_labs);
+    qlmps::DirectStateInitMps(mps, stat_labs);
     cout << "Initial mps as direct product state." << endl;
     mps.Dump(kMpsPath, true);
   }
@@ -157,12 +156,12 @@ int main(int argc, char *argv[]) {
   std::string mps_path;
   for (size_t i = 0; i < DMRG_time; i++) {
     std::cout << "D_max = " << Dmax_set[i] << std::endl;
-    gqmps2::FiniteVMPSSweepParams sweep_params(
+    qlmps::FiniteVMPSSweepParams sweep_params(
         params.Sweeps,
         Dmin_set[i], Dmax_set[i], params.CutOff,
-        gqmps2::LanczosParams(params.LanczErr, MaxLanczIterSet[i])
+        qlmps::LanczosParams(params.LanczErr, MaxLanczIterSet[i])
     );
-    e0 = gqmps2::FiniteDMRG(mps, mpo, sweep_params);
+    e0 = qlmps::FiniteDMRG(mps, mpo, sweep_params);
     mps_path = sweep_params.mps_path;
   }
 

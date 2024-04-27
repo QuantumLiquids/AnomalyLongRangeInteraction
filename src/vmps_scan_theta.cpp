@@ -1,5 +1,5 @@
-#include "gqmps2/gqmps2.h"
-#include "gqten/gqten.h"
+#include "qlmps/qlmps.h"
+#include "qlten/qlten.h"
 #include <time.h>
 #include <stdlib.h>
 #include "gqdouble.h"
@@ -12,8 +12,8 @@
 #include <filesystem>
 
 
-using namespace gqmps2;
-using namespace gqten;
+using namespace qlmps;
+using namespace qlten;
 using namespace std;
 
 void DMRGForOneTheta(const CaseParams &params,
@@ -38,8 +38,8 @@ int main(int argc, char *argv[]) {
     end_theta = std::atof(argv[3]);
   }
 
-  gqten::hp_numeric::SetTensorTransposeNumThreads(params.Threads);
-  gqten::hp_numeric::SetTensorManipulationThreads(params.Threads);
+  qlten::hp_numeric::SetTensorTransposeNumThreads(params.Threads);
+  qlten::hp_numeric::SetTensorManipulationThreads(params.Threads);
 
   std::vector<double> theta_set = linspace(0, M_PI / 2, 30);
 
@@ -115,8 +115,8 @@ void DMRGForOneTheta(const CaseParams &params,
   const SiteVec<TenElemT, QNT> sites = SiteVec<TenElemT, QNT>(L, pb_out);
 
 
-  gqmps2::MPO<Tensor> mpo(L);
-  gqmps2::MPOGenerator<TenElemT, U1QN> mpo_gen(sites, qn0);
+  qlmps::MPO<Tensor> mpo(L);
+  qlmps::MPOGenerator<TenElemT, U1QN> mpo_gen(sites, qn0);
   if (model_params.is_anomaly) {
     for (size_t i = 0; i < L - 2; i++) {
       mpo_gen.AddTerm(0.5 * model_params.omega_0, sigma_z, i, sigma_x, i + 1);
@@ -164,7 +164,7 @@ void DMRGForOneTheta(const CaseParams &params,
 
   mpo = mpo_gen.Gen();
 
-  using FiniteMPST = gqmps2::FiniteMPS<TenElemT, QNT>;
+  using FiniteMPST = qlmps::FiniteMPS<TenElemT, QNT>;
   FiniteMPST mps(sites);
 
   std::vector<long unsigned int> stat_labs(L);
@@ -182,13 +182,13 @@ void DMRGForOneTheta(const CaseParams &params,
       cout << "The number of mps files is consistent with mps size." << endl;
       cout << "Directly use mps from files." << endl;
     } else {
-      gqmps2::DirectStateInitMps(mps, stat_labs);
+      qlmps::DirectStateInitMps(mps, stat_labs);
       cout << "Initial mps as direct product state." << endl;
       mps.Dump(kMpsPath, true);
     }
   } else {
     cout << "No mps directory." << endl;
-    gqmps2::DirectStateInitMps(mps, stat_labs);
+    qlmps::DirectStateInitMps(mps, stat_labs);
     cout << "Initial mps as direct product state." << endl;
     mps.Dump(kMpsPath, true);
   }
@@ -202,14 +202,14 @@ void DMRGForOneTheta(const CaseParams &params,
   } else {
     sweeps = params.Sweeps;
   }
-  gqmps2::FiniteVMPSSweepParams sweep_params(
+  qlmps::FiniteVMPSSweepParams sweep_params(
       sweeps,
       params.Dmin, params.Dmax,
       params.CutOff,
-      gqmps2::LanczosParams(params.LanczErr, params.MaxLanczIter),
+      qlmps::LanczosParams(params.LanczErr, params.MaxLanczIter),
       params.noise
   );
-  e0 = gqmps2::TwoSiteFiniteVMPS(mps, mpo, sweep_params);
+  e0 = qlmps::TwoSiteFiniteVMPS(mps, mpo, sweep_params);
   mps_path = sweep_params.mps_path;
 
   std::cout << "E0/site: " << e0 / L << std::endl;

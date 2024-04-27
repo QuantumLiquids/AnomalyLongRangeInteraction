@@ -9,9 +9,9 @@
 #ifndef ANOMALY_LONG_RANGE_INTERACTION_SRC_PARAMS_CASE_H
 #define ANOMALY_LONG_RANGE_INTERACTION_SRC_PARAMS_CASE_H
 
-#include "gqmps2/case_params_parser.h"
+#include "qlmps/case_params_parser.h"
 
-using gqmps2::CaseParamsParserBasic;
+using qlmps::CaseParamsParserBasic;
 
 struct CaseParams : public CaseParamsParserBasic {
   CaseParams(const char *pf) : CaseParamsParserBasic(pf) {
@@ -39,6 +39,7 @@ struct CaseParams : public CaseParamsParserBasic {
     LanczErr = ParseDouble("LanczErr");
     MaxLanczIter = ParseInt("MaxLanczIter");
     Threads = ParseInt("Threads");
+    SymbolicCompressMPO = ParseBool("SymbolicCompressMPO");
     Perturbation = ParseDouble("Perturbation");
     wavelength = ParseDouble("wavelength");
     noise = ParseDoubleVec("noise");
@@ -60,6 +61,7 @@ struct CaseParams : public CaseParamsParserBasic {
   double LanczErr;
   size_t MaxLanczIter;
   size_t Threads;
+  bool SymbolicCompressMPO;
   double Perturbation;
   double wavelength;
   std::vector<double> noise;
