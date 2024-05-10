@@ -14,6 +14,11 @@ using namespace std;
 
 int main(int argc, char *argv[]) {
   CaseParams params(argv[1]);
+  int boundary_condition(std::atoi(argv[2]));
+  if (boundary_condition < 0 || boundary_condition > 3) {
+    std::cerr << "boundary condition error!" << std::endl;
+  }
+
   size_t L = params.L;
   LongRangInteractionModelParamters model_params(params);
   model_params.Print();
@@ -52,7 +57,13 @@ int main(int argc, char *argv[]) {
   startTime = clock();
   OperatorInitial();
   using QNT = Z2Z2QN;
-  const SiteVec<TenElemT, QNT> sites = SiteVec<TenElemT, QNT>(L, pb_out);
+  IndexVec<QNT> phy_indices(L);
+  phy_indices[0] = pb_out_front;
+  phy_indices.back() = pb_out_end;
+  for (size_t i = 1; i < L - 1; i++) {
+    phy_indices[i] = pb_out;
+  }
+  const SiteVec<TenElemT, QNT> sites = SiteVec<TenElemT, QNT>(phy_indices);
 
 //  qlmps::MPO<Tensor> mpo(L);
 //  const std::string kMpoPath = "mpo";
@@ -69,10 +80,20 @@ int main(int argc, char *argv[]) {
   qlmps::MPOGenerator<TenElemT, Z2Z2QN> mpo_gen(sites, qn0);
   if (model_params.is_anomaly) {
     for (size_t i = 0; i < L - 2; i++) {
-      mpo_gen.AddTerm(0.5 * model_params.omega_0, sigma_z, i, sigma_x, i + 1);
-      mpo_gen.AddTerm(0.5 * model_params.omega_0, sigma_x, i + 1, sigma_z, i + 2);
+      if (i == 0) {
+        mpo_gen.AddTerm(0.5 * model_params.omega_0, sigma_z0, i, sigma_x, i + 1);
+        mpo_gen.AddTerm(-0.5 * model_params.omega_1, {sigma_z0, sigma_x, sigma_z}, {i, i + 1, i + 2});
+        mpo_gen.AddTerm(0.5 * model_params.omega_0, sigma_x, i + 1, sigma_z, i + 2);
+      } else if (i == L - 3) {
+        mpo_gen.AddTerm(0.5 * model_params.omega_0, sigma_z, i, sigma_x, i + 1);
+        mpo_gen.AddTerm(-0.5 * model_params.omega_1, {sigma_z, sigma_x, sigma_z_end}, {i, i + 1, i + 2});
+        mpo_gen.AddTerm(0.5 * model_params.omega_0, sigma_x, i + 1, sigma_z_end, i + 2);
+      } else {
+        mpo_gen.AddTerm(0.5 * model_params.omega_0, sigma_z, i, sigma_x, i + 1);
+        mpo_gen.AddTerm(-0.5 * model_params.omega_1, {sigma_z, sigma_x, sigma_z}, {i, i + 1, i + 2});
+        mpo_gen.AddTerm(0.5 * model_params.omega_0, sigma_x, i + 1, sigma_z, i + 2);
+      }
       mpo_gen.AddTerm(0.5 * model_params.omega_1, sigma_x, i + 1);
-      mpo_gen.AddTerm(-0.5 * model_params.omega_1, {sigma_z, sigma_x, sigma_z}, {i, i + 1, i + 2});
     }
   } else {
     for (size_t i = 0; i < L - 2; i++) {
@@ -85,13 +106,35 @@ int main(int argc, char *argv[]) {
   if (model_params.decay_level == 0) { //const
     for (size_t i = 0; i < L; i++) {
       for (size_t j = i + 2; j < std::min(i + params.InteractionRange + 2, L); j++) {
-        mpo_gen.AddTerm(model_params.J / 2, sigma_z, i, sigma_z, j);
+        Tensor op1, op2;
+        if (i == 0) {
+          op1 = sigma_z0;
+        } else {
+          op1 = sigma_z;
+        }
+        if (j == L - 1) {
+          op2 = sigma_z_end;
+        } else {
+          op2 = sigma_z;
+        }
+        mpo_gen.AddTerm(model_params.J / 2, op1, i, op2, j);
       }
     }
   } else if (model_params.decay_level == -1) {
     for (size_t i = 0; i < L; i++) {
       for (size_t j = i + 2; j < L; j++) {
-        mpo_gen.AddTerm(model_params.J / 2 / (j - i), sigma_z, i, sigma_z, j);
+        Tensor op1, op2;
+        if (i == 0) {
+          op1 = sigma_z0;
+        } else {
+          op1 = sigma_z;
+        }
+        if (j == L - 1) {
+          op2 = sigma_z_end;
+        } else {
+          op2 = sigma_z;
+        }
+        mpo_gen.AddTerm(model_params.J / 2 / (j - i), op1, i, op2, j);
       }
     }
   } else if (model_params.decay_level == -2) {
@@ -125,7 +168,6 @@ int main(int argc, char *argv[]) {
 
   qlten::hp_numeric::SetTensorManipulationThreads(params.Threads);
 
-
   std::vector<long unsigned int> stat_labs(L);
   for (size_t i = 0; i < L; i++) {
     stat_labs[i] = (i % 2);
@@ -135,7 +177,8 @@ int main(int argc, char *argv[]) {
   std::random_device rd;
   std::mt19937 g(rd());
   std::shuffle(stat_labs.begin(), stat_labs.end(), g);
-
+  stat_labs[0] = boundary_condition % 2;
+  stat_labs[L - 1] = (boundary_condition / 2) % 2;
   if (IsPathExist(kMpsPath)) {
     if (L == GetNumofMps()) {
       cout << "The number of mps files is consistent with mps size." << endl;

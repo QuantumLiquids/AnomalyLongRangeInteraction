@@ -129,6 +129,7 @@ link_libraries(
 #add_executable(mpogen src/mpogen.cpp src/operators.cpp)
 add_executable(vmps src/vmps.cpp src/myutil.cpp src/operators.cpp)
 add_executable(dmrg src/dmrg.cpp src/myutil.cpp src/operators.cpp)
+add_executable(dmrgz2z2 src/dmrg_z2z2.cpp src/myutil.cpp src/operators.cpp)
 add_executable(vmps_scan_theta src/vmps_scan_theta.cpp src/myutil.cpp src/operators.cpp)
 #add_executable(dmrg src/dmrg.cpp src/myutil.cpp src/operators.cpp)
 add_executable(measure1 src/measure1.cpp)

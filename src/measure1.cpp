@@ -9,7 +9,7 @@
 #include "qlmps/qlmps.h"
 #include "qlten/qlten.h"
 #include <ctime>
-#include "gqdouble.h"
+#include "qldouble.h"
 //#include "myutil.h"
 //#include "operators.h"
 #include "params_case.h"
@@ -49,8 +49,8 @@ int main(int argc, char *argv[]) {
   sm({1, 0}) = 1.0;
   id({0, 0}) = 1.0;
   id({1, 1}) = 1.0;
-  const SiteVec<TenElemT, U1QN> sites = SiteVec<TenElemT, U1QN>(L, pb_out);
-  using FiniteMPST = qlmps::FiniteMPS<TenElemT, U1QN>;
+  const SiteVec<TenElemT, Z2Z2QN> sites = SiteVec<TenElemT, Z2Z2QN>(L, pb_out);
+  using FiniteMPST = qlmps::FiniteMPS<TenElemT, Z2Z2QN>;
   FiniteMPST mps(sites);
 
   Timer one_site_timer("measure  one site operators");

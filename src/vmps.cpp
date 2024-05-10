@@ -2,7 +2,7 @@
 #include "qlten/qlten.h"
 #include <time.h>
 #include <stdlib.h>
-#include "gqdouble.h"
+#include "qldouble.h"
 #include "operators.h"
 #include "params_case.h"
 #include "myutil.h"
@@ -51,7 +51,7 @@ int main(int argc, char *argv[]) {
   clock_t startTime, endTime;
   startTime = clock();
   OperatorInitial();
-  using QNT = U1QN;
+  using QNT = Z2Z2QN;
   const SiteVec<TenElemT, QNT> sites = SiteVec<TenElemT, QNT>(L, pb_out);
 
   qlmps::MPO<Tensor> mpo(L);
@@ -67,7 +67,7 @@ int main(int argc, char *argv[]) {
   } else {
     cout << "No mpo directory. start to generate mpo" << std::endl;
     Timer mpo_generate_timer("mpo_generate");
-    qlmps::MPOGenerator<TenElemT, U1QN> mpo_gen(sites, qn0);
+    qlmps::MPOGenerator<TenElemT, Z2Z2QN> mpo_gen(sites, qn0);
     if (model_params.is_anomaly) {
       for (size_t i = 0; i < L - 2; i++) {
         mpo_gen.AddTerm(0.5 * model_params.omega_0, sigma_z, i, sigma_x, i + 1);
@@ -130,7 +130,6 @@ int main(int argc, char *argv[]) {
     params.Threads = max_threads;
   }
 
-  qlten::hp_numeric::SetTensorTransposeNumThreads(params.Threads);
   qlten::hp_numeric::SetTensorManipulationThreads(params.Threads);
 
   std::vector<long unsigned int> stat_labs(L);
