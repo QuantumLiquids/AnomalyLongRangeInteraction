@@ -38,7 +38,6 @@ int main(int argc, char *argv[]) {
     end_theta = std::atof(argv[3]);
   }
 
-  qlten::hp_numeric::SetTensorTransposeNumThreads(params.Threads);
   qlten::hp_numeric::SetTensorManipulationThreads(params.Threads);
 
   std::vector<double> theta_set = linspace(0, M_PI / 2, 30);

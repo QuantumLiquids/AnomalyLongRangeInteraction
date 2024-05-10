@@ -16,8 +16,6 @@
 #include <random>
 #include "dmrg_my_measure.h"
 
-
-
 using namespace qlmps;
 using namespace qlten;
 using namespace std;
@@ -34,10 +32,8 @@ int main(int argc, char *argv[]) {
 
   clock_t startTime, endTime;
   startTime = clock();
-
-  qlten::hp_numeric::SetTensorTransposeNumThreads(params.Threads);
+  
   qlten::hp_numeric::SetTensorManipulationThreads(params.Threads);
-
 
   Tensor sz = Tensor({pb_in, pb_out});
   Tensor sp = Tensor({pb_in, pb_out});
