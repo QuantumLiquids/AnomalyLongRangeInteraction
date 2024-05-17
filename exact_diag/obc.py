@@ -11,13 +11,13 @@ import math
 #    diagonlization routines to solve for the eigenstates and       #
 #    energies of the XXZ chain.                                     #
 #####################################################################
-from quspin.operators import hamiltonian  # Hamiltonians and operators
+from quspin.operators import hamiltonian,quantum_operator  # Hamiltonians and operators
 from quspin.basis import spin_basis_1d  # Hilbert space spin basis
 
 from scipy.sparse.linalg import eigsh
 
 ##### define model parameters #####
-L = 8  # system size
+L = 16  # system size
 Jzz = 1
 theta = math.pi / 4
 alpha = 1
@@ -33,6 +33,8 @@ Z = -(s + 1)  # spin inversion
 P = s[::-1]
 
 E_list = []
+BZZ_list = [] # boundary sigma_z * sigma_z, distinguish even/odd number of domain wall
+
 
 for p_int in range(2):
     # basis = spin_basis_general(L,pauli=0,Nup=L//2,zblock=(Z,0),pblock=(P,0)) # and positive parity sector
@@ -57,9 +59,23 @@ for p_int in range(2):
     #
     ##### various exact diagonalisation routines #####
     # E,V=eigsh(H_XXZ.aslinearoperator())
-    E = H_XXZ.eigsh(k=min(4, dim), which='SA', return_eigenvectors=False)
+    E, V = H_XXZ.eigsh(k=min(10, dim), which='SA', return_eigenvectors=True)
     E.sort()
     print(E)
     E_list.append(E.tolist())
 
-np.savetxt("data.txt", E_list, fmt="%s")
+    bdry_sites = [[1.0, 0, L-1]]
+    bdry_zz_dict={"a": [["zz", bdry_sites]]}
+    bdry_zz_opt = quantum_operator(bdry_zz_dict, N = L, basis = basis)
+    bzz = []
+    for s in range(10):
+        v = V[:, s]
+        bzz.append(int(round(bdry_zz_opt.matrix_ele(v,v,{"a":1}))))
+    BZZ_list.append(bzz)
+
+theta_str = "{:.4f}".format(theta)
+filename = f"EnergyOBCN{L}theta{theta_str}alpha{alpha}.txt"
+np.savetxt(filename, E_list, fmt="%s")
+
+filename = f"BZZOBCN{L}theta{theta_str}alpha{alpha}.txt"
+np.savetxt(filename, BZZ_list, fmt="%s")

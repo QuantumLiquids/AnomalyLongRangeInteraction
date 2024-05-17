@@ -11,15 +11,16 @@ import math
 #    diagonlization routines to solve for the eigenstates and       #
 #    energies of the XXZ chain.                                     #
 #####################################################################
-from quspin.operators import hamiltonian  # Hamiltonians and operators
+from quspin.operators import hamiltonian, quantum_operator, quantum_LinearOperator  # Hamiltonians and operators
 from quspin.basis import spin_basis_1d  # Hilbert space spin basis
+from quspin.tools.evolution import expm_multiply_parallel
 
 from scipy.sparse.linalg import eigsh
 
 ##### define model parameters #####
-L = 20  # system size
+L = 24  # system size
 Jzz = 1
-theta = math.pi / 4
+theta = 0.6
 alpha = 1
 omega_0 = math.cos(theta)
 omega_1 = math.sin(theta)
@@ -33,6 +34,7 @@ Z = -(s + 1)  # spin inversion
 P = s[::-1]
 
 E_list = []
+UX_list = []
 
 for k_int in range(L):
     # basis = spin_basis_general(L,pauli=0,Nup=L//2,zblock=(Z,0),pblock=(P,0)) # and positive parity sector
@@ -42,8 +44,7 @@ for k_int in range(L):
     print("basis blocks : {}".format(basis.blocks))
     print("basis info : {}".format(basis.description))
 
-    # define operators with OBC using site-coupling lists
-    J_zz = [[Jzz / 2.0 / min((j - i) % L, (i - j) % L) ** alpha, i, j] for i in range(L) for j in range(i + 2, L)]
+    J_zz = [[Jzz / 2.0 / min((j - i) % L, (i - j) % L) ** alpha, i, j] for i in range(L) for j in range(i + 2, min(L-1+i,L))]
     Ja = [[0.5 * omega_0, i, (i + 1) % L] for i in range(L)]
     Jb = [[0.5 * omega_1, i] for i in range(L)]
     Jc = [[-0.5 * omega_1, i, (i + 1) % L, (i + 2) % L] for i in range(L)]
@@ -56,9 +57,34 @@ for k_int in range(L):
     #
     ##### various exact diagonalisation routines #####
     # E,V=eigsh(H_XXZ.aslinearoperator())
-    E = H_XXZ.eigsh(k=min(8, dim), which='SA', return_eigenvectors=False)
-    E.sort()
+    E,V = H_XXZ.eigsh(k=min(10, dim), which='SA',tol=1E-15,maxiter=1E5, return_eigenvectors=True)
     print(E)
     E_list.append(E.tolist())
 
-np.savetxt("data.txt", E_list, fmt="%s")
+    x_prod_coup_sites = [[1.0] + list(range(L))]
+    x_prod_static=[["x"*L, x_prod_coup_sites]]
+    x_prod_opt = quantum_LinearOperator(x_prod_static, basis=basis, dtype=np.complex128)
+
+    ising_zz_coup_sites = [[1.0, i, (i + 1) % L] for i in range(L)]
+    ising_zz_static = [["zz",ising_zz_coup_sites ]]
+    ising_zz_opt = hamiltonian(ising_zz_static, dynamic, basis=basis, dtype=np.complex128)
+    
+    uxs = []
+    for s in range(10):
+        v = V[:, s]
+        v1 = x_prod_opt.dot(v)
+        v2 = expm_multiply_parallel(ising_zz_opt.tocsr(), a = -1.0j*math.pi/4.0).dot(v1)
+        ux = np.conjugate(v).dot(v2) * np.exp(1.0j*math.pi/4.0 * L)
+        uxs.append(int(round(ux)))
+
+    UX_list.append(uxs)
+
+
+
+theta_str = "{:.4f}".format(theta)
+filename = f"EnergyN{L}theta{theta_str}alpha{alpha}.txt"
+np.savetxt(filename, E_list, fmt="%s")
+
+filename = f"UXN{L}theta{theta_str}alpha{alpha}.txt"
+np.savetxt(filename, UX_list, fmt="%s")
+
